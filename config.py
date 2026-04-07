@@ -85,3 +85,7 @@ DAYS_BACK = 1  # 每日运行设1，每周运行设7
 
 # arXiv API
 ARXIV_API = "http://export.arxiv.org/api/query"
+
+# 飞书应用配置（从环境变量读取，不要硬编码）
+FEISHU_APP_ID = os.getenv("FEISHU_APP_ID", "")
+FEISHU_APP_SECRET = os.getenv("FEISHU_APP_SECRET", "")

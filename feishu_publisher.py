@@ -8,9 +8,10 @@ import requests
 from datetime import datetime
 from typing import Optional, List
 
-# 飞书应用配置（从 OpenClaw 配置中获取）
-FEISHU_APP_ID = "cli_a9474ae03abadbb3"
-FEISHU_APP_SECRET = "6z6X2Pai1ayiUbqtIQZKvbHCmQib0i0q"
+# 飞书应用配置（从环境变量或 config 读取）
+# IMPORTANT: 不要硬编码 secrets，使用 .env 文件
+from config import FEISHU_APP_ID, FEISHU_APP_SECRET
+
 FEISHU_API_BASE = "https://open.feishu.cn/open-apis"
 
 # 全局 token 缓存
