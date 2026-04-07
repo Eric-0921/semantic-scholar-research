@@ -18,22 +18,18 @@ from pathlib import Path
 from typing import List, Dict
 
 # 导入项目模块
-from paper_tracker import run as run_tracker
-from author_tracker import run as run_author_tracker
-from citation_network import analyze_citations
 import feishu_publisher
-from config import OUTPUT_DIR, DAYS_BACK
+from config import OUTPUT_DIR, DAYS_BACK, WATCH_AUTHORS, WATCH_KEYWORDS, CORE_KEYWORDS, MAX_PAPERS_PER_KEYWORD
 
 # 默认推送配置
-DEFAULT_USER_EMAIL = None  # 留空表示推送给机器人自身（用于测试）
+DEFAULT_USER_ID = "ou_603bc50e2bf3c6f09f4aec8c89f655b1"  # 飞书用户 ID
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description="每日科研简报生成与推送")
     parser.add_argument("--days", type=int, default=1, help="追溯天数 (默认: 1)")
     parser.add_argument("--dry-run", action="store_true", help="仅生成本地文件，不推送飞书")
-    parser.add_argument("--user-email", type=str, default=DEFAULT_USER_EMAIL, help="推送目标邮箱")
-    parser.add_argument("--user-open-id", type=str, default=None, help="推送目标 open_id (优先级高于 email)")
+    parser.add_argument("--user-open-id", type=str, default=None, help="推送目标 open_id (默认使用配置中的 FEISHU_USER_ID)")
     parser.add_argument("--output-only", action="store_true", help="仅输出 Markdown，不创建文档")
     return parser.parse_args()
 
@@ -155,7 +151,6 @@ def generate_report_markdown(date_str: str, days_back: int, papers: List[dict],
             lines.append("")
 
     # 搜索关键词
-    from config import WATCH_KEYWORDS, CORE_KEYWORDS
     lines.append("---")
     lines.append("")
     lines.append("## 🔍 搜索关键词")
@@ -196,29 +191,13 @@ def main():
     print(f"📅 生成每日科研简报: {date_str} (追溯 {days_back} 天)")
     print()
 
-    # 1. 运行 paper_tracker（临时修改 DAYS_BACK）
+    # 1. 检索论文
     print("🔍 正在检索论文...")
-    from config import config as cfg
+    from semantic_scholar_client import SemanticScholarClient
+    from paper_tracker import load_cache
 
-    # 保存原始值
-    original_days_back = cfg.DAYS_BACK
-    cfg.DAYS_BACK = days_back
-
-    # 运行追踪
     papers = []
     try:
-        # paper_tracker 的 run() 会自动运行并保存报告
-        # 我们需要捕获它返回/保存的数据
-        import paper_tracker
-        paper_tracker.DAYS_BACK = days_back
-
-        # 重新运行（使用 paper_tracker 的 run 函数）
-        # 由于 paper_tracker.run() 会写入文件，我们直接调用它的逻辑
-        from paper_tracker import load_cache, save_cache, fetch_recent_papers, fetch_author_papers
-        from semantic_scholar_client import SemanticScholarClient
-        from arxiv_client import search_arxiv
-        from config import WATCH_KEYWORDS, CORE_KEYWORDS, WATCH_AUTHORS, MAX_PAPERS_PER_KEYWORD
-
         client = SemanticScholarClient()
         processed_ids = load_cache()
 
@@ -251,12 +230,10 @@ def main():
         print(f"✅ 检索到 {len(papers)} 篇论文")
 
     except Exception as e:
-        print(f"❌ paper_tracker 运行失败: {e}")
+        print(f"❌ 检索论文失败: {e}")
         papers = []
-    finally:
-        cfg.DAYS_BACK = original_days_back
 
-    # 2. 运行 author_tracker
+    # 2. 追踪作者
     print()
     print("👤 正在追踪作者...")
     author_papers = []
@@ -293,18 +270,7 @@ def main():
         print("📤 正在推送飞书...")
 
         # 确定推送目标
-        receive_id = args.user_open_id
-        receive_id_type = "open_id"
-
-        if not receive_id and args.user_email:
-            try:
-                receive_id = feishu_publisher.get_user_open_id(user_email=args.user_email)
-                print(f"✅ 找到用户 open_id: {receive_id}")
-            except Exception as e:
-                print(f"⚠️ 获取用户 open_id 失败: {e}")
-                print("  将使用机器人自身测试...")
-                # 使用机器人自身作为测试
-                receive_id = None
+        user_id = args.user_open_id or DEFAULT_USER_ID
 
         # 计算统计
         total_papers = len(papers)
@@ -317,28 +283,31 @@ def main():
                 title=doc_title,
                 markdown_content=markdown_content
             )
-            doc_url = doc_result.get("node_url", doc_result.get("doc_url", ""))
-            print(f"✅ 飞书文档: {doc_url}")
+            if doc_result.get("ok"):
+                doc_url = doc_result.get("doc_url", "")
+                print(f"✅ 飞书文档: {doc_url}")
+            else:
+                print(f"⚠️ 创建飞书文档失败: {doc_result.get('error', 'Unknown error')}")
+                doc_url = None
         except Exception as e:
             print(f"⚠️ 创建飞书文档失败: {e}")
             doc_url = None
 
         # 发送消息卡片
-        if not receive_id:
-            print("⚠️ 未指定推送目标，跳过消息发送")
-        else:
-            try:
-                result = feishu_publisher.send_daily_report_card(
-                    receive_id=receive_id,
-                    receive_id_type=receive_id_type,
-                    date_str=date_str,
-                    paper_count=total_papers,
-                    high_impact=high_impact,
-                    doc_url=doc_url
-                )
+        try:
+            result = feishu_publisher.send_daily_report_card(
+                date_str=date_str,
+                paper_count=total_papers,
+                high_impact=high_impact,
+                doc_url=doc_url,
+                user_id=user_id
+            )
+            if result.get("ok"):
                 print(f"✅ 飞书消息已发送: message_id={result.get('message_id')}")
-            except Exception as e:
-                print(f"⚠️ 发送飞书消息失败: {e}")
+            else:
+                print(f"⚠️ 发送飞书消息失败: {result.get('error', 'Unknown error')}")
+        except Exception as e:
+            print(f"⚠️ 发送飞书消息失败: {e}")
 
     print()
     print("🎉 完成！")
