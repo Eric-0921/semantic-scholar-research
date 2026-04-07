@@ -14,6 +14,7 @@
 | 选刊助手 | `venue_selector.py` | 分析目标期刊特征，与研究方向匹配，给出选刊建议 |
 | 作者追踪 | `author_tracker.py` | 追踪特定作者的新发表论文 |
 | 个性化推荐 | `personalized_recommender.py` | 基于种子论文获取个性化推荐 |
+| 每日简报 | `daily_report.py` | 每日科研简报生成与飞书推送 |
 
 ## 快速开始
 
@@ -72,12 +73,17 @@ research_automation/
 ├── config.py                    # 配置（API Key、关键词、输出目录）
 ├── semantic_scholar_client.py   # Semantic Scholar API 客户端（核心库）
 ├── arxiv_client.py              # arXiv 搜索客户端
+├── feishu_publisher.py          # 飞书文档与消息推送
 ├── literature_review_pipeline.py # 场景一：文献综述自动化
 ├── citation_network.py          # 场景二：引用网络分析
 ├── paper_tracker.py             # 场景三：每日论文追踪
 ├── research_gap_finder.py       # 场景四：研究 Gap 挖掘
 ├── related_work_writer.py       # 场景五：Related Work 写作辅助
 ├── venue_selector.py            # 场景六：选刊助手
+├── author_tracker.py            # 作者追踪
+├── personalized_recommender.py  # 个性化推荐
+├── daily_report.py             # 每日简报生成与推送
+└── setup_cron.sh               # Cron 定时任务设置
 ├── author_tracker.py            # 作者追踪
 └── personalized_recommender.py  # 个性化推荐
 ```
@@ -114,6 +120,49 @@ WATCH_AUTHORS = ["Author Name 1", "Author Name 2"]
 # 输出目录
 OUTPUT_DIR = "output/"
 DAILY_REPORTS_DIR = "output/daily_reports/"
+```
+
+## 每日简报与飞书推送
+
+### 设置定时任务
+
+```bash
+# 设置每天早上 8:00 自动运行
+bash setup_cron.sh
+
+# 手动运行
+python daily_report.py
+
+# 测试运行（不推送）
+python daily_report.py --dry-run
+
+# 推送到指定用户
+python daily_report.py --user-email your@email.com
+```
+
+### 推送内容
+
+1. **飞书 Wiki 文档**: 完整的每日科研简报（含高影响力论文、最新论文列表、作者追踪）
+2. **飞书消息卡片**: 简要摘要通知，点击卡片可跳转完整文档
+
+### 手动测试推送
+
+```python
+from feishu_publisher import create_wiki_node, send_daily_report_card
+
+# 创建 Wiki 文档
+result = create_wiki_node("测试文档", "# Hello World\n这是一篇测试文档")
+print(f"文档链接: {result['node_url']}")
+
+# 发送消息卡片（需要 open_id）
+card = send_daily_report_card(
+    receive_id="ou_xxxxx",
+    receive_id_type="open_id",
+    date_str="2024-01-15",
+    paper_count=10,
+    high_impact=3,
+    doc_url="https://feishu.cn/wiki/xxxxx"
+)
 ```
 
 ## 输出示例

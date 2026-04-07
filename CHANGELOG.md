@@ -4,7 +4,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.1.0] - 2026-04-07
+## [1.2.0] - 2026-04-07
+
+### Added
+
+- **feishu_publisher.py**: 飞书文档与消息推送模块
+  - `create_doc()`: 从 Markdown 创建飞书云文档
+  - `create_wiki_node()`: 在个人知识库创建 Wiki 文档
+  - `update_doc()`: 更新文档内容
+  - `send_text_message()`: 发送文本消息
+  - `send_interactive_card()`: 发送消息卡片
+  - `send_daily_report_card()`: 发送每日简报卡片
+  - `markdown_to_feishu_blocks()`: Markdown 转飞书块格式
+
+- **daily_report.py**: 每日科研简报生成与推送
+  - 整合 paper_tracker + author_tracker
+  - 生成完整 Markdown 报告
+  - 自动推送到飞书文档（Wiki）
+  - 发送消息卡片通知
+  - 支持 `--dry-run` 和 `--user-email` 参数
+
+- **setup_cron.sh**: Cron 定时任务设置脚本
 
 ### Changed
 
