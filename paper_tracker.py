@@ -11,7 +11,7 @@ from typing import List, Optional, Set
 from semantic_scholar_client import SemanticScholarClient
 from arxiv_client import search_arxiv
 from config import (
-    SEMANTIC_SCHOLAR_API_KEY, WATCH_KEYWORDS, WATCH_AUTHORS,
+    SEMANTIC_SCHOLAR_API_KEY, WATCH_KEYWORDS, CORE_KEYWORDS, WATCH_AUTHORS,
     OUTPUT_DIR, DAILY_REPORTS_DIR, RELEVANCE_THRESHOLD,
     DAYS_BACK, MAX_PAPERS_PER_KEYWORD, MY_RESEARCH_FOCUS
 )
@@ -165,14 +165,21 @@ def run_daily_tracker():
 
     all_new_papers = {}
 
-    # 1. Semantic Scholar 关键词搜索（合并为一次查询）
+    # 1. Semantic Scholar 核心关键词搜索（高优先级）
+    papers = fetch_recent_papers(client, CORE_KEYWORDS, DAYS_BACK)
+    for p in papers:
+        pid = p.get("paperId")
+        if pid and pid not in processed_ids and pid not in all_new_papers:
+            all_new_papers[pid] = p
+
+    # 2. Semantic Scholar 扩展关键词搜索（补充）
     papers = fetch_recent_papers(client, WATCH_KEYWORDS, DAYS_BACK)
     for p in papers:
         pid = p.get("paperId")
         if pid and pid not in processed_ids and pid not in all_new_papers:
             all_new_papers[pid] = p
 
-    # 2. 作者追踪
+    # 4. 作者追踪
     if WATCH_AUTHORS:
         author_papers = fetch_author_papers(client, WATCH_AUTHORS, DAYS_BACK)
         for p in author_papers:
@@ -180,7 +187,7 @@ def run_daily_tracker():
             if pid and pid not in processed_ids and pid not in all_new_papers:
                 all_new_papers[pid] = p
 
-    # 3. arXiv 搜索
+    # 5. arXiv 搜索
     for keyword in WATCH_KEYWORDS:
         print(f"  🔎 arXiv检索: {keyword}")
         try:

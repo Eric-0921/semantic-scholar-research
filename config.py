@@ -22,14 +22,40 @@ MY_RESEARCH_FOCUS = """
 - 室温量子传感应用
 """
 
-# 追踪关键词（NV色心 + 量子传感）
+# 追踪关键词（NV色心 + 量子传感）- 中英文混合
 WATCH_KEYWORDS = [
-    "NV center diamond",
-    "nitrogen-vacancy center",
-    "quantum sensing magnetometry",
-    "diamond quantum sensing",
-    "solid-state spin",
-    "NV magnetometer",
+    # 核心概念
+    "NV center", "nitrogen-vacancy", "金刚石NV色心", "NV色心",
+    "quantum sensing", "量子传感", "量子精密测量",
+    "diamond quantum", "金刚石量子",
+
+    # 物理机制
+    "spin qubit", "自旋量子比特", "solid-state spin", "固态自旋",
+    "coherence", "相干性", "decoherence", "退相干",
+    "ODMR", "光检测磁共振", "Rabi oscillation", "拉比振荡",
+    "hyperfine coupling", "超精细耦合", "Zeeman", "塞曼效应",
+
+    # 传感器件
+    "NV magnetometer", "NV磁力计", "magnetometry", "磁力测量",
+    "quantum magnetometer", "量子磁力计", "magnetic field sensing",
+
+    # 应用领域
+    "NMR", "MRI", "核磁共振", "bioimaging", "生物成像",
+    "temperature sensing", "温度传感", "electric field sensing",
+
+    # 制备与表征
+    "ion implantation", "离子注入", "electron beam", "电子束",
+    "CVD diamond", "CVD金刚石", "diamond fabrication",
+
+    # 前沿技术
+    "quantum entanglement", "量子纠缠", "quantum error correction",
+    "deep learning quantum", "machine learning NV",
+]
+
+# 核心关键词（高优先级，每次必搜）
+CORE_KEYWORDS = [
+    "NV center", "nitrogen-vacancy", "quantum sensing",
+    "NV magnetometer", "diamond quantum", "ODMR",
 ]
 
 # 追踪特定作者（可添加）

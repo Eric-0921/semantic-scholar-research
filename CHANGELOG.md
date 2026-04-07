@@ -4,7 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.0.0] - 2024-01-15
+## [1.1.0] - 2026-04-07
+
+### Changed
+
+- **关键词库扩展**: 从 6 个扩展到 30+ 个中英文混合关键词
+  - 核心概念: NV center, nitrogen-vacancy, 量子传感, 金刚石量子
+  - 物理机制: spin qubit, 相干性, ODMR, Rabi oscillation, 超精细耦合
+  - 传感器件: NV磁力计, magnetometry, quantum magnetometer
+  - 应用领域: NMR, MRI, 生物成像, 温度传感
+  - 制备表征: 离子注入, 电子束, CVD金刚石
+  - 前沿技术: 量子纠缠, 量子纠错, 深度学习量子
+
+- **CORE_KEYWORDS**: 新增核心关键词配置，优先搜索高相关度论文
+- **paper_tracker.py**: 双层搜索策略（核心关键词 + 扩展关键词）
+
+## [1.0.0] - 2026-04-05
 
 ### Added
 
