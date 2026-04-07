@@ -114,11 +114,10 @@ def generate_report_markdown(date_str: str, days_back: int, papers: List[dict],
             lines.append(f"> {abstract[:150]}...")
 
         lines.append("")
-        lines.append(f"- **年份**: {year} | **期刊**: {venue} | **引用**: {citations}", end="")
+        meta = f"- **年份**: {year} | **期刊**: {venue} | **引用**: {citations}"
         if influential > 0:
-            lines.append(f" | 🔥 高影响力: {influential}")
-        else:
-            lines.append("")
+            meta += f" | 🔥 高影响力: {influential}"
+        lines.append(meta)
         lines.append(f"- **链接**: [Semantic Scholar](https://www.semanticscholar.org/paper/{paper_id})")
         lines.append("")
 
@@ -199,35 +198,19 @@ def main():
     papers = []
     try:
         client = SemanticScholarClient()
-        processed_ids = load_cache()
 
-        # 搜索核心关键词
-        all_papers = {}
-        for kw in CORE_KEYWORDS:
-            try:
-                results = client.search_papers(kw, limit=MAX_PAPERS_PER_KEYWORD)
-                for p in results:
-                    pid = p.get("paperId")
-                    if pid and pid not in all_papers:
-                        all_papers[pid] = p
-                time.sleep(1)
-            except Exception as e:
-                print(f"  ⚠️ 搜索 '{kw}' 失败: {e}")
+        # 使用单个合并查询（最快的方式）
+        combined_query = " NV center OR quantum sensing OR diamond quantum OR magnetometry "
 
-        # 搜索扩展关键词
-        for kw in WATCH_KEYWORDS:
-            try:
-                results = client.search_papers(kw, limit=MAX_PAPERS_PER_KEYWORD)
-                for p in results:
-                    pid = p.get("paperId")
-                    if pid and pid not in all_papers:
-                        all_papers[pid] = p
-                time.sleep(1)
-            except Exception as e:
-                print(f"  ⚠️ 搜索 '{kw}' 失败: {e}")
+        print(f"  📝 搜索: {combined_query.strip()}")
 
-        papers = list(all_papers.values())
-        print(f"✅ 检索到 {len(papers)} 篇论文")
+        try:
+            results = client.search_papers(combined_query, limit=100)
+            papers = results
+            print(f"✅ 检索到 {len(papers)} 篇论文")
+        except Exception as e:
+            print(f"  ⚠️ 搜索失败: {e}")
+            papers = []
 
     except Exception as e:
         print(f"❌ 检索论文失败: {e}")
