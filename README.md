@@ -1,6 +1,6 @@
 # Semantic Scholar Research Automation
 
-基于 Semantic Scholar API 的学术论文自动化研究工具集，专注于金刚石 NV 色心与量子传感领域。
+基于 Semantic Scholar API 的学术论文自动化研究工具集，专注于**金刚石 NV 色心**与**量子传感**领域。支持每日自动追踪最新论文并推送至飞书。
 
 ## 功能概览
 
@@ -14,197 +14,206 @@
 | 选刊助手 | `venue_selector.py` | 分析目标期刊特征，与研究方向匹配，给出选刊建议 |
 | 作者追踪 | `author_tracker.py` | 追踪特定作者的新发表论文 |
 | 个性化推荐 | `personalized_recommender.py` | 基于种子论文获取个性化推荐 |
-| 每日简报 | `daily_report.py` | 每日科研简报生成与飞书推送 |
+| 每日简报 | `daily_report.py` | **整合以上功能，每日生成飞书文档+消息推送** |
 
 ## 快速开始
 
-### 环境要求
+### 1. 环境要求
 
 - Python 3.8+
-- Semantic Scholar API Key
+- Node.js 16+ (用于 lark-cli)
+- Git
 
-### 安装
+### 2. 克隆项目
 
 ```bash
-# 克隆项目
 git clone https://github.com/Eric-4058/semantic-scholar-research.git
 cd semantic-scholar-research
-
-# 安装依赖
-pip install requests python-dotenv
-
-# 配置 API Key
-cp .env.example .env
-# 编辑 .env 文件，填入您的 API Key
 ```
 
-### 获取 API Key
-
-1. 访问 [Semantic Scholar API](https://www.semanticscholar.org/product/api)
-2. 注册并获取免费 API Key
-3. 将 Key 填入 `.env` 文件
-
-### 使用示例
+### 3. 安装依赖
 
 ```bash
-# 文献综述
-python literature_review_pipeline.py "NV center quantum sensing"
+# Python 依赖
+pip install requests python-dotenv
 
-# 论文追踪（生成日报）
-python paper_tracker.py
+# 安装 lark-cli (飞书 CLI 工具)
+npm install -g @larksuite/cli
 
-# 引用网络分析
-python citation_network.py "Quantum sensing with NV centers in diamond"
+# 认证 lark-cli (使用 Bot 模式，Token 永不过期)
+npx lark-cli auth login --domain docs,wiki --recommend
+```
 
-# 选刊建议
-python venue_selector.py "Your paper abstract here" "Your paper title"
+### 4. 配置
 
-# 作者追踪
-python author_tracker.py "Ronald Walschap" --days 30
+```bash
+# 复制环境变量模板
+cp .env.example .env
 
-# 个性化推荐
-python personalized_recommender.py "NV center quantum magnetometry" --limit 20
+# 编辑 .env 文件，填入你的凭证
+nano .env
+```
+
+### 5. 运行
+
+```bash
+# 每日简报 (推荐)
+python daily_report.py
+
+# 指定天数
+python daily_report.py --days 7
+
+# 仅本地生成，不推送飞书
+python daily_report.py --dry-run
+```
+
+## 配置说明
+
+### .env 文件
+
+```ini
+# Semantic Scholar API Key (必需)
+# 申请地址: https://www.semanticscholar.org/product/api
+# 免费账号: 1 req/sec
+SEMANTIC_SCHOLAR_API_KEY=your-key-here
+
+# 飞书应用凭证 (用于文档创建和消息推送)
+# 创建应用: https://open.feishu.cn/app
+FEISHU_APP_ID=cli_xxx
+FEISHU_APP_SECRET=xxx
+```
+
+### config.py 关键配置
+
+```python
+# 核心关键词 (优先搜索，高相关度)
+CORE_KEYWORDS = [
+    "NV center", "nitrogen-vacancy", "quantum sensing",
+    "NV magnetometer", "diamond quantum", "ODMR",
+]
+
+# 扩展关键词 (补充搜索，广覆盖)
+WATCH_KEYWORDS = [
+    # 核心概念、物理机制、传感器件、应用领域、制备表征、前沿技术
+    "NV center", "nitrogen-vacancy", "金刚石NV色心", ...
+]
+
+# 追踪的作者 (可选)
+WATCH_AUTHORS = ["Author Name 1", "Author Name 2"]
+
+# 输出目录
+OUTPUT_DIR = "output/"
 ```
 
 ## 项目结构
 
 ```
-research_automation/
-├── config.py                    # 配置（API Key、关键词、输出目录）
-├── semantic_scholar_client.py   # Semantic Scholar API 客户端（核心库）
+semantic-scholar-research/
+├── config.py                    # 全局配置
+├── semantic_scholar_client.py   # Semantic Scholar API 客户端 ⭐核心
 ├── arxiv_client.py              # arXiv 搜索客户端
-├── feishu_publisher.py          # 飞书文档与消息推送
-├── literature_review_pipeline.py # 场景一：文献综述自动化
-├── citation_network.py          # 场景二：引用网络分析
-├── paper_tracker.py             # 场景三：每日论文追踪
-├── research_gap_finder.py       # 场景四：研究 Gap 挖掘
-├── related_work_writer.py       # 场景五：Related Work 写作辅助
-├── venue_selector.py            # 场景六：选刊助手
+├── feishu_publisher.py          # 飞书文档与消息推送 (lark-cli)
+├── paper_tracker.py             # 论文追踪
+├── citation_network.py           # 引用网络分析
+├── literature_review_pipeline.py # 文献综述生成
+├── research_gap_finder.py       # 研究 Gap 挖掘
+├── related_work_writer.py        # Related Work 写作辅助
+├── venue_selector.py            # 选刊助手
 ├── author_tracker.py            # 作者追踪
 ├── personalized_recommender.py  # 个性化推荐
-├── daily_report.py             # 每日简报生成与推送
-└── setup_cron.sh               # Cron 定时任务设置
-├── author_tracker.py            # 作者追踪
-└── personalized_recommender.py  # 个性化推荐
+├── daily_report.py              # 每日简报 (整合以上功能)
+├── setup_cron.sh               # Cron 定时任务设置
+├── .env.example                # 环境变量模板
+├── .gitignore                 # Git 忽略规则
+├── requirements.txt            # Python 依赖
+├── README.md                  # 本文档
+└── TECHNICAL.md               # 技术文档
 ```
 
-## API 效率优化
+## 技术文档
 
-本项目针对 Semantic Scholar API 速率限制（1 req/sec）进行了优化：
+详见 [TECHNICAL.md](./TECHNICAL.md)，包含：
 
-| 策略 | 说明 |
-|------|------|
-| 批量请求 | `search_papers_bulk()` 每次获取 1000 条 |
-| 批量 Paper | `batch_get_papers()` 每次最多 500 篇 |
-| 布尔查询 | 多关键词合并为一次搜索 |
-| 指数退避 | 429 错误时自动重试 (1s → 2s → 4s → 8s → 16s) |
-| 缓存机制 | 追踪已处理论文 ID，避免重复 |
+- API 速率限制与应对策略
+- 批量搜索 vs 普通搜索的选择
+- 布尔查询优化
+- 指数退避重试机制
+- 飞书 API vs lark-cli 对比
+- 缓存与去重策略
 
-## 配置说明
+## 每日定时任务
 
-在 `config.py` 或 `.env` 文件中配置：
-
-```python
-# API Key
-SEMANTIC_SCHOLAR_API_KEY = "your-api-key"
-
-# 论文追踪关键词
-WATCH_KEYWORDS = [
-    "NV center", "nitrogen vacancy", "diamond quantum",
-    "quantum sensing", "magnetometry", "spin defect"
-]
-
-# 追踪的作者
-WATCH_AUTHORS = ["Author Name 1", "Author Name 2"]
-
-# 输出目录
-OUTPUT_DIR = "output/"
-DAILY_REPORTS_DIR = "output/daily_reports/"
-```
-
-## 每日简报与飞书推送
-
-### 设置定时任务
+### 设置 Cron
 
 ```bash
-# 设置每天早上 8:00 自动运行
-bash setup_cron.sh
+# 编辑 crontab
+crontab -e
 
-# 手动运行
-python daily_report.py
-
-# 测试运行（不推送）
-python daily_report.py --dry-run
-
-# 推送到指定用户
-python daily_report.py --user-email your@email.com
+# 添加定时任务 (每天早上 8:00 运行)
+0 8 * * * cd /path/to/semantic-scholar-research && python3 daily_report.py >> logs/daily_report.log 2>&1
 ```
 
-### 推送内容
+### 查看日志
 
-1. **飞书 Wiki 文档**: 完整的每日科研简报（含高影响力论文、最新论文列表、作者追踪）
-2. **飞书消息卡片**: 简要摘要通知，点击卡片可跳转完整文档
+```bash
+tail -f logs/daily_report.log
+```
 
-### 手动测试推送
+## 常见问题
 
-```python
-from feishu_publisher import create_wiki_node, send_daily_report_card
+### Q: API 返回 "Max retries exceeded"
 
-# 创建 Wiki 文档
-result = create_wiki_node("测试文档", "# Hello World\n这是一篇测试文档")
-print(f"文档链接: {result['node_url']}")
+**原因**: 触发了 Semantic Scholar 的速率限制 (免费账号 1 req/sec)
 
-# 发送消息卡片（需要 open_id）
-card = send_daily_report_card(
-    receive_id="ou_xxxxx",
-    receive_id_type="open_id",
-    date_str="2024-01-15",
-    paper_count=10,
-    high_impact=3,
-    doc_url="https://feishu.cn/wiki/xxxxx"
-)
+**解决**:
+1. 等待 1-2 分钟后再试
+2. 减少搜索关键词数量
+3. 使用批量搜索而非多次单独搜索
+
+### Q: 飞书文档创建失败 "permission denied"
+
+**原因**: 应用缺少文档权限
+
+**解决**: 在 [飞书开放平台](https://open.feishu.cn/app) 给应用添加以下权限：
+- `docx` (云文档)
+- `im:message:send_as_bot` (发送消息)
+
+### Q: lark-cli 命令找不到
+
+**解决**: 确保 PATH 包含 npm 全局 bin 目录：
+```bash
+export PATH="$(npm root -g)/bin:$PATH"
 ```
 
 ## 输出示例
 
-### 论文追踪日报
+### 飞书消息卡片
 
-```markdown
-# 论文追踪日报 2024-01-15
+```
+📚 每日科研简报 2024-01-15
 
-**研究方向**: 金刚石NV色心 · 量子传感
-
-共发现 12 篇相关论文（其中 3 篇具有高影响力引用）
+研究方向: 金刚石NV色心 · 量子传感
 
 ---
+今日新论文: 12 篇
+高影响力: 3 篇 🔥
 
-## 1. Novel NV Center Magnetometer with Deep Learning
-**作者**: Zhang et al. | **年份**: 2024 | **引用**: 45 🔥
-
-> We demonstrate a novel quantum magnetometer...
----
+📖 点击查看完整报告
 ```
 
-### 选刊报告
+### 飞书文档内容
 
-```markdown
-# 投稿选刊分析报告
-
-| 排名 | 期刊/会议 | 匹配分数 | 级别 |
-|------|-----------|----------|------|
-| 1 | Nature Physics | 85/100 ⭐⭐⭐ | A* |
-| 2 | PRX Quantum | 78/100 ⭐⭐⭐ | A* |
-| 3 | Science Advances | 72/100 ⭐⭐⭐ | A* |
-```
+- 统计概览 (论文总数、高影响力数量)
+- 高影响力论文列表
+- 最新论文列表 (含 TLDR/摘要)
+- 作者追踪
+- 搜索关键词记录
 
 ## 相关文档
 
-- [Semantic Scholar API 文档](./docs/README.md)
-- [API 速率限制与优化策略](./docs/API_OPTIMIZATION.md)
-
-## 致谢
-
-本项目受 [Semantic Scholar API](https://www.semanticscholar.org/product/api) 和 [Allen AI](https://allenai.org/) 支持。
+- [Semantic Scholar API 文档](https://www.semanticscholar.org/product/api)
+- [lark-cli 文档](https://open.feishu.cn/document/tools-and-clis/clis/readme)
+- [飞书开放平台](https://open.feishu.cn/)
 
 ## License
 

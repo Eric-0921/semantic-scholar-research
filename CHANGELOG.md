@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.3.0] - 2026-04-07
+
+### Added
+
+- **TECHNICAL.md**: 详细技术文档
+  - API 速率限制与应对策略
+  - 批量搜索 vs 普通搜索对比
+  - 布尔查询优化技巧
+  - 指数退避重试机制
+  - 飞书 API vs lark-cli 对比
+  - 踩坑记录 (API Key 硬编码、速率限制、应用权限、Token 过期等)
+
+- **README.md 大幅更新**: 详细安装配置说明、常见问题解答
+
+### Fixed
+
+- 确认 .env 不上传 (仅 .env.example)
+- lark-cli 替代直接 API 调用解决权限问题
+
 ## [1.2.0] - 2026-04-07
 
 ### Added
